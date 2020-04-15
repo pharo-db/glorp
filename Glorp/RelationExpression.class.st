@@ -18,7 +18,7 @@ Class {
 		'rightChild',
 		'outerJoin'
 	],
-	#category : 'Glorp-Expressions'
+	#category : #'Glorp-Expressions'
 }
 
 { #category : #'instance creation' }
@@ -332,6 +332,11 @@ RelationExpression >> mappableSourceFieldsDo: aBlock [
 { #category : #mapping }
 RelationExpression >> mappedFields [
 	^Array with: self
+]
+
+{ #category : #mapping }
+RelationExpression >> mappedFieldsCount [
+	^1
 ]
 
 { #category : #'private/initializing' }

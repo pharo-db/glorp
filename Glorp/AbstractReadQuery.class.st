@@ -31,12 +31,12 @@ Class {
 		'shouldRefresh',
 		'tracing'
 	],
-	#category : 'Glorp-Queries'
+	#category : #'Glorp-Queries'
 }
 
 { #category : #'instance creation' }
 AbstractReadQuery class >> newQuery [
-	^SimpleQuery new
+	^self delegateClass new
 ]
 
 { #category : #'*Glorp' }
@@ -227,7 +227,7 @@ AbstractReadQuery >> defaultTracing [
 AbstractReadQuery >> deleteFromDatabaseWithParameters: anArray [
 	| command |
 	self descriptor classesRequiringIndependentQueries size >1 ifTrue: [self error: 'Delete with where clause not yet supported for classes that cross tables.'].
-	self class ~~ SimpleQuery ifTrue: [self error: 'Non-simple queries not yet supported for deletes with where clauses'].
+	(self class includesBehavior: SimpleQuery) ifFalse: [self error: 'Non-simple queries not yet supported for deletes with where clauses'].
 	command := self deleteSqlWith: anArray.
 	"Should this duplicate the error handling in rowsFromDatabasewithParameters:?"
 	session accessor executeCommand: command returnCursor: false.
@@ -237,7 +237,7 @@ AbstractReadQuery >> deleteFromDatabaseWithParameters: anArray [
 { #category : #executing }
 AbstractReadQuery >> deleteWithParameters: parameterArray in: aSession [ 
 	| |
-	session := aSession.
+	self session: aSession.
 	self checkValidity.
 	self setUpExpressions.
 	self setupTracing.
@@ -246,7 +246,7 @@ AbstractReadQuery >> deleteWithParameters: parameterArray in: aSession [
 
 { #category : #accessing }
 AbstractReadQuery >> descriptor [
-	^session descriptorFor: resultClass
+	^session ifNotNil: [session descriptorFor: resultClass]
 ]
 
 { #category : #'boolean operations' }
@@ -255,9 +255,14 @@ AbstractReadQuery >> except: aQuery [
 ]
 
 { #category : #executing }
+AbstractReadQuery >> execute [
+	^self executeIn: self resultClass session
+]
+
+{ #category : #executing }
 AbstractReadQuery >> executeWithParameters: parameterArray in: aSession [ 
 	| |
-	session := aSession.
+	self session: aSession.
 	self requiresFullQuery 
 		ifTrue: [^self asFullQuery executeWithParameters: parameterArray in: aSession].
 	self checkValidity.
@@ -266,6 +271,19 @@ AbstractReadQuery >> executeWithParameters: parameterArray in: aSession [
 	self setupTracing.
 	^self 
 		readFromDatabaseWithParameters: parameterArray
+]
+
+{ #category : #executing }
+AbstractReadQuery >> first [ 
+	^self readsOneObject: true; limit: 1; executeIn: self resultClass session
+]
+
+{ #category : #executing }
+AbstractReadQuery >> first: anInteger [
+	anInteger = 1 
+		ifTrue: [ self readsOneObject: true ]
+		ifFalse: [ self limit: anInteger ].
+	^self executeIn: self resultClass session
 ]
 
 { #category : #testing }

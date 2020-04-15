@@ -4,12 +4,19 @@ This is a platform for the socket protocol 2 API of the PostgreSQL database.
 Class {
 	#name : #PostgreSQLPlatform,
 	#superclass : #PostgresPlatform,
-	#category : 'Glorp-Platforms'
+	#category : #'Glorp-Platforms'
 }
 
 { #category : #testing }
 PostgreSQLPlatform class >> useBindingByDefault [
 	^false
+]
+
+{ #category : #'conversion-strings' }
+PostgreSQLPlatform >> NeoJSONReaderSQLStringToJSONObject: aString for: aType [
+	aString isNil
+		ifTrue: [ ^ nil ].
+	^ NeoJSONReader  fromString: aString
 ]
 
 { #category : #constants }
@@ -180,6 +187,11 @@ PostgreSQLPlatform >> hexPrintBlob: aByteArray on: aStream for: aType [
 	aStream nextPutAll: '\\x'.
 	aStream nextPutAll: aByteArray hex.
 	aStream nextPutAll: '''::bytea'.
+]
+
+{ #category : #types }
+PostgreSQLPlatform >> inet [
+	^self text
 ]
 
 { #category : #functions }

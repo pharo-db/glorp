@@ -16,7 +16,7 @@ Class {
 		'shouldProxy',
 		'query'
 	],
-	#category : 'Glorp-Mappings'
+	#category : #'Glorp-Mappings'
 }
 
 { #category : #'instance creation' }
@@ -60,7 +60,7 @@ DirectMapping >> buildQuery [
 	whereClause := Join new.
 	descriptor primaryTable primaryKeyFields do: [:each |
 		whereClause addSource: each target: each].
-	query := Query readOneOf: descriptor describedClass where: whereClause.
+	query := self session queryClass readOneOf: descriptor describedClass where: whereClause.
 	query retrieve: self attribute name.
 	query session: self session.
 	^query.
@@ -218,7 +218,8 @@ DirectMapping >> mapObject: anObject inElementBuilder: anElementBuilder [
 		^self setValueIn: anObject to: ((self newProxyIn: anElementBuilder)
 						session: descriptor session;
 						parameters: (self parametersIn: anElementBuilder);
-						glorpOwner: anObject)].
+						glorpOwner: anObject;
+						glorpArmProxy)].
 	value := self valueInBuilder: anElementBuilder.
 	self setValueIn: anObject to: value
 ]

@@ -48,7 +48,7 @@ Class {
 	#classInstVars : [
 		'converterRepository'
 	],
-	#category : 'Glorp-Platforms'
+	#category : #'Glorp-Platforms'
 }
 
 { #category : #'as yet unclassified' }
@@ -214,6 +214,15 @@ DatabasePlatform >> byteArrayToStringConverter [
 		hostedBy: self
 		fromStToDb: #convertStringToByteArray:for:
 		fromDbToSt: #convertByteArrayToString:for:.
+]
+
+{ #category : #'conversion-times' }
+DatabasePlatform >> byteaConverter [
+	^DelegatingDatabaseConverter
+		named: #bytea
+		hostedBy: self
+		fromStToDb: #toByteaSQLString:for:
+		fromDbToSt: #nullConverter:for: "P3 converts on the way in"
 ]
 
 { #category : #testing }
@@ -1042,6 +1051,11 @@ DatabasePlatform >> isSQLite3Platform [
 	^false
 ]
 
+{ #category : #testing }
+DatabasePlatform >> isUDBCSQLite3Platform [
+	^false
+]
+
 { #category : #constants }
 DatabasePlatform >> maxSQLBufferLength [
 	"^<Integer> I return the maximum length of a sql command stream"
@@ -1461,6 +1475,13 @@ DatabasePlatform >> printSqlStatementToCopyDataFromTable: fromTable to: toTable 
 ]
 
 { #category : #'services tables' }
+DatabasePlatform >> printSqlStatementToListColumnsInTable: aDatabaseTable inSchema: schemaString on: aStream [
+	" The default SQL statement is
+	"
+	self subclassResponsibility 
+]
+
+{ #category : #'services tables' }
 DatabasePlatform >> printSqlStatementToListTablesInSchema: schemaString on: aStream [
 	" Not standardized, although SQL Server, MySQL and PostgreSQL use the INFORMATION_SCHEMA "
 
@@ -1808,6 +1829,15 @@ DatabasePlatform >> sqlStatementToCopyDataFromTable: fromDatabaseTable to: toDat
 		on: stream.
 
 	^ stream contents
+]
+
+{ #category : #'services tables' }
+DatabasePlatform >> sqlStatementToListColumnsForTable: aTableName inSchema: schemaString [
+
+	| stream |
+	stream := WriteStream on: String new.
+	self printSqlStatementToListColumnsInTable: aTableName inSchema: schemaString on: stream.
+	^stream contents
 ]
 
 { #category : #'services tables' }
@@ -2207,6 +2237,13 @@ DatabasePlatform >> timestampToDateConverter [
 { #category : #'type converters' }
 DatabasePlatform >> tinyint [
 	^self number
+]
+
+{ #category : #'conversion-times' }
+DatabasePlatform >> toByteaSQLString: aByteArray for: aType [
+	^String streamContents: [ :s | 
+		s nextPut: $\. 
+		aByteArray printHexOn: s ]
 ]
 
 { #category : #'conversion-times' }

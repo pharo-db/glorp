@@ -34,7 +34,7 @@ Class {
 		'linkFields',
 		'proxyAction'
 	],
-	#category : 'Glorp-Mappings'
+	#category : #'Glorp-Mappings'
 }
 
 { #category : #mapping }
@@ -83,7 +83,7 @@ RelationshipMapping >> buildGeneralQueryIn: anObjectBuilder [
 	parentCriteria := anObjectBuilder query whereClause.
 	fullCriteria := parentCriteria
 		rebuildOn: phantomExpression.
-	newQuery := Query read: self referenceClass.
+	newQuery := descriptor system queryClass read: self referenceClass.
 	"newQuery collectionType: self collectionType."
 	fullCriteria isEmptyExpression ifFalse: [newQuery where: fullCriteria].
 	self
@@ -98,8 +98,8 @@ RelationshipMapping >> buildQuery [
 	| toMany |
 	toMany := self attribute isCollectionAttribute.
 	query := toMany
-		ifTrue: [Query read: self referenceClass where: self join]
-		ifFalse: [Query readOneOf: self referenceClass where: self join].
+		ifTrue: [self session queryClass read: self referenceClass where: self join]
+		ifFalse: [self session queryClass readOneOf: self referenceClass where: self join].
 	query session: self session.
 	query baseExpression descriptor: (self session descriptorFor: self referenceClass).
 	query collectionType: self collectionType.
@@ -445,11 +445,12 @@ RelationshipMapping >> mapObject: anObject inElementBuilder: anElementBuilder [
 			proxy := (self newProxyIn: anElementBuilder)
 				session: session;
 				parameters: parameters;
-				glorpOwner: anObject.
+				glorpOwner: anObject;
+				glorpArmProxy.
 			"If we know in advance the proxy would return nil, or an empty collection, just put that in rather than the proxy"
-			(proxy query shortCircuitEmptyReturn: parameters)
+			"(proxy query shortCircuitEmptyReturn: parameters)
 				ifTrue: [proxy getValue]
-				ifFalse: [proxy]]
+				ifFalse: [proxy]"]
 		ifFalse:
 			[(self queryFor: anElementBuilder)
 				executeWithParameters: parameters
@@ -488,6 +489,13 @@ RelationshipMapping >> mappedFields [
 	"Return a collection of fields that this mapping will write into any of the containing object's rows"
 
 	^self join allSourceFields select: [:each | each isMappable and: [(each isGlorpExpression not or: [each isConstantExpression not])]].
+]
+
+{ #category : #testing }
+RelationshipMapping >> mappedFieldsCount [
+	"Return a collection of fields that this mapping will write into any of the containing object's rows"
+
+	^self mappedFields size
 ]
 
 { #category : #accessing }
